@@ -7,6 +7,9 @@ const cors = require("cors");
 app.use(cors());
 const bcryptjs = require("bcryptjs");
 
+const jwt = require("jsonwebtoken");
+const JWT_SECRET = "abcd123";
+
 const mongoUrl =
   "mongodb+srv://mnz:mnz123@cluster0.3pyhzll.mongodb.net/?retryWrites=true&w=majority";
 
@@ -14,10 +17,6 @@ mongoose
   .connect(mongoUrl, { useNewUrlParser: true })
   .then(() => console.log("Connected to database"))
   .catch((e) => console.log(e));
-
-app.listen(5000, () => {
-  console.log(" server started");
-});
 
 app.post("/post", async (req, res) => {
   console.log(req.body);
@@ -39,7 +38,7 @@ app.post("/post", async (req, res) => {
 require("./userSchema");
 const User = mongoose.model("userInfo");
 
-// REGISTER ROUTE 
+// REGISTER ROUTE
 
 app.post("/register", async (req, res) => {
   const { name, email, mobile, password } = req.body;
@@ -55,7 +54,7 @@ app.post("/register", async (req, res) => {
     const encryptedPassword = await bcryptjs.hash(password, 10); //ENCRYPTING PASSWORD
 
     //POSTING TO MONGODB
-    await User.create({ 
+    await User.create({
       uname: name,
       email,
       phoneNo: mobile,
@@ -69,29 +68,50 @@ app.post("/register", async (req, res) => {
   }
 });
 
-// app.post("/register", async (req, res) => {
-//   const { name, email, mobile, password } = req.body;
+//LOGIN ROUTE
 
-//   try {
-//     const oldEmail = await User.findOne({ email });
+app.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  const user = await User.findOne({ email }); //CHECKING EMAIL AVAILABLE OR NOTE IF AVAILABLE STORE THAT DATA IN TO USER
+  if (!user) {
+    return res.json({ status: "User not Found" });
+  }
 
-//     if (oldEmail) {
-//       return res.status(400).json({ error: "Already Used Email" });
-//     }
-//     const encryptedPassword = await bcryptjs.hash(password, 10);
-//     await User.create({
-//       uname: name,
-//       email,
-//       phoneNo: mobile,
-//       password: encryptedPassword,
-//     });
-//     res.status(201).json({ message: "Registrtion Successfull" });
-//   } catch (error) {
-//     console.log(error);
-//     res.status(500).json({ error: "Internal seerver Error" });
-//   }
-// });
+  //COMPARING REQ PASSWORD AND BODY APSSWORD WITH THE HELP OF BCRYPT
+  if (await bcryptjs.compare(password, user.password)) {
+    const token = jwt.sign({ email: user.email }, JWT_SECRET); //CRAETING TOKEN
+    //CHECKING IF STATUS 201 OR NOT 201 MEANS IT IS SUCCESS
+    if (res.status(201)) {
+      return res.json({ status: "Login Success", data: token }); //SENDING TOKEN
+    } else {
+      return res.json({ status: "error" });
+    }
+  }
+  res.json({ status: "error", error: "Invalid Password" });
+});
 
+app.listen(5000, () => {
+  console.log(" server started");
+});
+
+app.post("/userdata", async (req, res) => {
+  const { token } = req.body;
+
+  try {
+    const user = jwt.verify(token, JWT_SECRET);
+    console.log(user);
+    const userEmail = user.email;
+    User.findOne({ email: userEmail })
+      .then((data) => {
+        res.send({ status: "ok", data: data });
+      })
+      .catch((error) => {
+        res.send({ status: "error", data: error });
+      });
+  } catch (err) {
+    res.send({ status: "error" });
+  }
+});
 // SAMPLE REGISTER ROUTE
 
 // require("./userSchema");

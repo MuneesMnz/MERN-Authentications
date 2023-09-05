@@ -21,6 +21,7 @@ const Register = () => {
       .post("http://localhost:5000/register", value)
       .then((res) => {
         console.log(res);
+        navigate("/login");
       })
       .catch((err) => {
         console.log(err);
