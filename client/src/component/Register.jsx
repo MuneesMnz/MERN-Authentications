@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,13 +12,23 @@ const Register = () => {
     cPassword: "",
   });
 
-  const handleChange=(e)=>{
-    setValue(prev=>({...prev,[e.target.name]:e.target.value}))
-  }
-  console.log(value);
+  const handleChange = (e) => {
+    setValue((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    axios
+      .post("http://localhost:5000/register", value)
+      .then((res) => {
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+  };
   return (
     <div className=" w-[700px] h-auto px-10 py-5 rounded-lg bg-white shadow-md">
-      <form>
+      <form onSubmit={handleSubmit}>
         <div className="text-3xl font-semibold text-center mb-10">
           {" "}
           Register

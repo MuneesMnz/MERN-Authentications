@@ -2,11 +2,15 @@ const mongoose = require("mongoose");
 const userInfoSchema = new mongoose.Schema(
   {
     uname: String,
-    email: String,
+    email: { type: String, unique: true },
     phoneNo: String,
+    password: String,
   },
   {
-    collation: "userInfo",
+    collation: {
+      locale: "en_US",
+      strength: 1,
+    },
   }
 );
 
