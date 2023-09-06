@@ -18,6 +18,9 @@ mongoose
   .then(() => console.log("Connected to database"))
   .catch((e) => console.log(e));
 
+//SAMPLE TEST FOR POST
+//--------------------
+
 app.post("/post", async (req, res) => {
   console.log(req.body);
   const { data } = req.body;
@@ -39,6 +42,7 @@ require("./userSchema");
 const User = mongoose.model("userInfo");
 
 // REGISTER ROUTE
+//---------------
 
 app.post("/register", async (req, res) => {
   const { name, email, mobile, password } = req.body;
@@ -69,6 +73,7 @@ app.post("/register", async (req, res) => {
 });
 
 //LOGIN ROUTE
+//---------------
 
 app.post("/login", async (req, res) => {
   const { email, password } = req.body;
@@ -79,7 +84,9 @@ app.post("/login", async (req, res) => {
 
   //COMPARING REQ PASSWORD AND BODY APSSWORD WITH THE HELP OF BCRYPT
   if (await bcryptjs.compare(password, user.password)) {
-    const token = jwt.sign({ email: user.email }, JWT_SECRET); //CRAETING TOKEN
+    const token = jwt.sign({ email: user.email }, JWT_SECRET, {
+      expiresIn: 10,
+    }); //CRAETING TOKEN
     //CHECKING IF STATUS 201 OR NOT 201 MEANS IT IS SUCCESS
     if (res.status(201)) {
       return res.json({ status: "Login Success", data: token }); //SENDING TOKEN
@@ -90,17 +97,25 @@ app.post("/login", async (req, res) => {
   res.json({ status: "error", error: "Invalid Password" });
 });
 
-app.listen(5000, () => {
-  console.log(" server started");
-});
+//USER DATA GET WITH POSTING TOKEN
+//--------------------------------
 
 app.post("/userdata", async (req, res) => {
-  const { token } = req.body;
+  const { token } = req.body; //PASSING TOKEN
 
   try {
-    const user = jwt.verify(token, JWT_SECRET);
-    console.log(user);
+    const user = jwt.verify(token, JWT_SECRET, (err, res) => {
+      //VERIFYING TOKEN EXPIRE OR NOT
+      if (err) {
+        return "token expired";
+      }
+      return res;
+    });
+    if (user === "token expired") {
+      return res.send({ status: "error with token", data: "token expired" });
+    }
     const userEmail = user.email;
+    //FINDING WITH USER EMAIL IF AVAILABLE OR NOT OR ANY ERROR
     User.findOne({ email: userEmail })
       .then((data) => {
         res.send({ status: "ok", data: data });
@@ -111,6 +126,12 @@ app.post("/userdata", async (req, res) => {
   } catch (err) {
     res.send({ status: "error" });
   }
+});
+
+//SETING ROUTE TO APP FOR API
+
+app.listen(5000, () => {
+  console.log(" server started");
 });
 // SAMPLE REGISTER ROUTE
 

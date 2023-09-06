@@ -13,12 +13,13 @@ const Login = () => {
   };
   const handleSubmit = (e) => {
     e.preventDefault();
+    
     axios
       .post("http://localhost:5000/login", value)
       .then((res) => {
         console.log(res.data);
         localStorage.setItem("token", res.data.data);
-        localStorage.setItem("loggedIn", "true");
+        localStorage.setItem("loggedIn", true);
         navigate("/");
       })
       .catch((err) => {
